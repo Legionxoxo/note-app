@@ -5,8 +5,11 @@ import "./App.css";
 
 const App = () => {
     const [notes, setNotes] = useState([]);
-    const [selectedNote, setSelectedNote] = useState(null);
-    const [currentNote, setCurrentNote] = useState(null);
+    const [selectedNoteId, setSelectedNoteId] = useState(null);
+
+    // Get the selected note from the notes array
+    const selectedNote =
+        notes.find((note) => note.id === selectedNoteId) || null;
 
     useEffect(() => {
         // Load notes from localStorage on initial render
@@ -15,6 +18,9 @@ const App = () => {
             try {
                 const parsedNotes = JSON.parse(savedNotes);
                 setNotes(parsedNotes);
+                if (parsedNotes.length > 0) {
+                    setSelectedNoteId(parsedNotes[0].id); // auto-select first note
+                }
             } catch (error) {
                 console.error("Error loading notes from localStorage:", error);
                 setNotes([]);
@@ -23,9 +29,7 @@ const App = () => {
     }, []);
 
     const handleNoteSelect = (note) => {
-        // Find the latest version of the note from our state
-        const currentNote = notes.find((n) => n.id === note.id) || note;
-        setSelectedNote(currentNote);
+        setSelectedNoteId(note.id);
     };
 
     const handleCreateNote = () => {
@@ -36,9 +40,7 @@ const App = () => {
                 blocks: [
                     {
                         type: "paragraph",
-                        data: {
-                            text: "Start writing your note here...",
-                        },
+                        data: { text: "" }, // empty content for new note
                     },
                 ],
             },
@@ -46,7 +48,7 @@ const App = () => {
         };
         const updatedNotes = [newNote, ...notes];
         setNotes(updatedNotes);
-        setSelectedNote(newNote);
+        setSelectedNoteId(newNote.id);
         localStorage.setItem("notes", JSON.stringify(updatedNotes));
     };
 
@@ -55,54 +57,29 @@ const App = () => {
         setNotes(updatedNotes);
         localStorage.setItem("notes", JSON.stringify(updatedNotes));
 
-        // If the deleted note was selected, clear the selection
-        if (selectedNote && selectedNote.id === noteId) {
-            setSelectedNote(null);
+        if (selectedNoteId === noteId) {
+            // Select another note or clear selection if none left
+            setSelectedNoteId(
+                updatedNotes.length > 0 ? updatedNotes[0].id : null
+            );
         }
     };
 
-    const handleSave = (noteData) => {
-        setCurrentNote(noteData);
-        // Update the note in the notes array
+    const handleSave = (updatedNote) => {
+        // Update lastModified when saving
+        const noteToSave = {
+            ...updatedNote,
+            lastModified: new Date().toISOString(),
+        };
+
+        // Update notes array - this will automatically update selectedNote
+        // since it's derived from the notes array
         const updatedNotes = notes.map((note) =>
-            note.id === noteData.id ? noteData : note
+            note.id === noteToSave.id ? noteToSave : note
         );
         setNotes(updatedNotes);
         localStorage.setItem("notes", JSON.stringify(updatedNotes));
-        console.log("Note saved:", noteData);
-    };
-
-    const handleDownloadNote = (note) => {
-        if (!note.content) {
-            alert("No content to download");
-            return;
-        }
-
-        // Convert note content to markdown format
-        let markdown = `# ${note.title}\n\n`;
-        note.content.blocks.forEach((block) => {
-            switch (block.type) {
-                case "paragraph":
-                    markdown += `${block.data.text}\n\n`;
-                    break;
-                case "header":
-                    markdown += `${"#".repeat(block.data.level)} ${
-                        block.data.text
-                    }\n\n`;
-                    break;
-                // Add other block type conversions as needed
-            }
-        });
-
-        const blob = new Blob([markdown], { type: "text/markdown" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${note.title || "untitled"}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        console.log("Note saved:", noteToSave);
     };
 
     return (
@@ -115,19 +92,16 @@ const App = () => {
                 onNoteSelect={handleNoteSelect}
                 onCreateNote={handleCreateNote}
                 onDeleteNote={handleDeleteNote}
-                onDownloadNote={handleDownloadNote}
+                selectedNoteId={selectedNoteId}
             />
             <main
                 className="main-content"
-                style={{
-                    flex: 1,
-                    overflow: "hidden",
-                }}
+                style={{ flex: 1, overflow: "hidden" }}
             >
                 {selectedNote ? (
                     <Editor
-                        key={selectedNote.id}
-                        note={currentNote}
+                        key={selectedNoteId}
+                        note={selectedNote}
                         onSave={handleSave}
                     />
                 ) : (

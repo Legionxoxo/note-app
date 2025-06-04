@@ -4,27 +4,140 @@ import { EDITOR_JS_TOOLS } from "./editor/editorTools";
 import { handleFileUpload } from "../utils/fileUtils";
 import { exportAsMarkdown, downloadMarkdown } from "../utils/exportUtils";
 
-const Editor = ({ note, onSave }) => {
+const Editor = ({ note = {}, onSave }) => {
     const editorRef = useRef(null);
     const editorInstance = useRef(null);
     const fileInputRef = useRef(null);
-    const [title, setTitle] = useState(note?.title || "Untitled Note");
+    const initializationLock = useRef(false);
+    const currentNoteId = useRef(null);
+    const debounceTimeoutRef = useRef(null);
+
+    const [title, setTitle] = useState(note.title || "Untitled Note");
+    const titleRef = useRef(title);
+
+    useEffect(() => {
+        setTitle(note.title || "Untitled Note");
+    }, [note.title]);
+
+    useEffect(() => {
+        titleRef.current = title;
+    }, [title]);
+
+    const forceDestroyEditor = () => {
+        if (editorInstance.current) {
+            try {
+                if (typeof editorInstance.current.destroy === "function") {
+                    editorInstance.current.destroy();
+                }
+                if (typeof editorInstance.current.clear === "function") {
+                    editorInstance.current.clear();
+                }
+            } catch (error) {
+                console.warn("Error during editor cleanup:", error);
+            }
+            editorInstance.current = null;
+        }
+        if (editorRef.current) {
+            editorRef.current.innerHTML = "";
+        }
+    };
+
+    const initializeEditor = async (customData = null) => {
+        if (initializationLock.current) {
+            console.log(
+                "Editor initialization already in progress, skipping..."
+            );
+            return;
+        }
+
+        initializationLock.current = true;
+        console.log("Initializing editor for note:", note.id);
+
+        try {
+            forceDestroyEditor();
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            if (editorRef.current) {
+                editorRef.current.innerHTML = "";
+            }
+
+            const editorData = customData || note.content || { blocks: [] };
+
+            editorInstance.current = new EditorJS({
+                holder: editorRef.current,
+                tools: EDITOR_JS_TOOLS,
+                placeholder: "Start writing your note here...",
+                data: editorData,
+                onChange: () => {
+                    if (debounceTimeoutRef.current) {
+                        clearTimeout(debounceTimeoutRef.current);
+                    }
+
+                    debounceTimeoutRef.current = setTimeout(async () => {
+                        try {
+                            if (
+                                editorInstance.current &&
+                                !initializationLock.current
+                            ) {
+                                const outputData =
+                                    await editorInstance.current.save();
+                                onSave({
+                                    id: note.id || Date.now().toString(),
+                                    title: titleRef.current,
+                                    content: outputData,
+                                    lastModified: new Date().toISOString(),
+                                });
+                            }
+                        } catch (error) {
+                            console.error("Auto-save error:", error);
+                        }
+                    }, 800);
+                },
+                onReady: () => {
+                    console.log("Editor.js is ready!");
+                    currentNoteId.current = note.id;
+                    initializationLock.current = false;
+                },
+            });
+        } catch (error) {
+            console.error("Error initializing editor:", error);
+            initializationLock.current = false;
+            alert("Error initializing editor. Please refresh the page.");
+        }
+    };
+
+    useEffect(() => {
+        if (currentNoteId.current !== note.id) {
+            console.log(
+                "Note ID changed:",
+                currentNoteId.current,
+                "→",
+                note.id
+            );
+            initializeEditor();
+        }
+
+        return () => {
+            console.log("Unmounting editor, cleaning up...");
+            initializationLock.current = false;
+            currentNoteId.current = null;
+            forceDestroyEditor();
+        };
+    }, [note.id]);
 
     const saveNote = async () => {
         try {
-            if (!editorInstance.current) {
-                throw new Error("Editor instance not initialized");
-            }
+            if (!editorInstance.current)
+                throw new Error("Editor not initialized");
 
             const outputData = await editorInstance.current.save();
             onSave({
-                id: note?.id || Date.now().toString(),
-                title,
+                id: note.id || Date.now().toString(),
+                title: titleRef.current,
                 content: outputData,
                 lastModified: new Date().toISOString(),
             });
         } catch (error) {
-            console.error("Error saving note:", error);
+            console.error("Error saving note manually:", error);
             alert("Error saving note. Please try again.");
         }
     };
@@ -33,9 +146,9 @@ const Editor = ({ note, onSave }) => {
         try {
             const markdownContent = await exportAsMarkdown(
                 editorInstance.current,
-                title
+                titleRef.current
             );
-            downloadMarkdown(markdownContent, title);
+            downloadMarkdown(markdownContent, titleRef.current);
         } catch (error) {
             console.error("Error exporting note:", error);
             alert("Error exporting note. Please try again.");
@@ -48,128 +161,24 @@ const Editor = ({ note, onSave }) => {
 
         try {
             const blocks = await handleFileUpload(file, onSave, setTitle);
-
-            // Clear and reinitialize editor with new content
-            if (editorInstance.current) {
-                await editorInstance.current.destroy();
-                editorInstance.current = null;
-            }
-
-            // Create new editor instance with parsed content
-            editorInstance.current = new EditorJS({
-                holder: editorRef.current,
-                tools: EDITOR_JS_TOOLS,
-                placeholder: "Start writing your note here...",
-                data: {
-                    blocks: blocks,
-                },
-                onChange: async () => {
-                    try {
-                        setTimeout(async () => {
-                            try {
-                                const outputData =
-                                    await editorInstance.current.save();
-                                onSave({
-                                    id: note?.id || Date.now().toString(),
-                                    title,
-                                    content: outputData,
-                                    lastModified: new Date().toISOString(),
-                                });
-                            } catch (saveError) {
-                                console.error("Auto-save error:", saveError);
-                            }
-                        }, 300);
-                    } catch (error) {
-                        console.error("Error in onChange:", error);
-                    }
-                },
-                onReady: () => {
-                    console.log("Editor.js is ready to work!");
-                },
-            });
+            currentNoteId.current = null;
+            await initializeEditor({ blocks });
         } catch (error) {
-            console.error("Error handling file:", error);
+            console.error("File upload error:", error);
             alert(
                 error.message ||
                     "Error reading the markdown file. Please try again."
             );
         }
 
-        // Reset file input
         event.target.value = "";
     };
-
-    const initializeEditor = async () => {
-        if (editorInstance.current) {
-            try {
-                if (typeof editorInstance.current.destroy === "function") {
-                    await editorInstance.current.destroy();
-                }
-            } catch (error) {
-                console.error("Error destroying editor:", error);
-            }
-            editorInstance.current = null;
-        }
-
-        try {
-            editorInstance.current = new EditorJS({
-                holder: editorRef.current,
-                tools: EDITOR_JS_TOOLS,
-                placeholder: "Start writing your note here...",
-                data: note?.content || undefined,
-                onChange: async () => {
-                    try {
-                        setTimeout(async () => {
-                            try {
-                                const outputData =
-                                    await editorInstance.current.save();
-                                onSave({
-                                    id: note?.id || Date.now().toString(),
-                                    title,
-                                    content: outputData,
-                                    lastModified: new Date().toISOString(),
-                                });
-                            } catch (saveError) {
-                                console.error("Auto-save error:", saveError);
-                            }
-                        }, 300);
-                    } catch (error) {
-                        console.error("Error in onChange:", error);
-                    }
-                },
-                onReady: () => {
-                    console.log("Editor.js is ready to work!");
-                },
-            });
-        } catch (error) {
-            console.error("Error initializing editor:", error);
-            alert("Error initializing editor. Please refresh the page.");
-        }
-    };
-
-    useEffect(() => {
-        initializeEditor();
-        setTitle(note?.title || "Untitled Note");
-
-        return () => {
-            if (editorInstance.current) {
-                try {
-                    if (typeof editorInstance.current.destroy === "function") {
-                        editorInstance.current.destroy();
-                    }
-                } catch (error) {
-                    console.error("Error destroying editor:", error);
-                }
-                editorInstance.current = null;
-            }
-        };
-    }, [note?.id]);
 
     return (
         <div
             className="editor-container"
             style={{
-                fontFamily: "system-ui, -apple-system, sans-serif",
+                fontFamily: "system-ui",
                 width: "96%",
                 height: "100%",
                 display: "flex",
@@ -195,6 +204,8 @@ const Editor = ({ note, onSave }) => {
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    onBlur={saveNote}
+                    placeholder="Note Title"
                     style={{
                         flex: 1,
                         padding: "8px 12px",
@@ -203,12 +214,8 @@ const Editor = ({ note, onSave }) => {
                         fontSize: "16px",
                         fontWeight: "500",
                     }}
-                    placeholder="Note Title"
                 />
-                <div
-                    className="editor-buttons"
-                    style={{ display: "flex", gap: "8px" }}
-                >
+                <div style={{ display: "flex", gap: "8px" }}>
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -218,81 +225,22 @@ const Editor = ({ note, onSave }) => {
                     />
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            padding: "8px 12px",
-                            backgroundColor: "#6c757d",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                        }}
+                        style={buttonStyle("#6c757d")}
                     >
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                        >
-                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                        </svg>
-                        Upload MD
+                        📂 Upload MD
                     </button>
-                    <button
-                        onClick={saveNote}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            padding: "8px 12px",
-                            backgroundColor: "#007bff",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                        }}
-                    >
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                        >
-                            <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" />
-                        </svg>
-                        Save Note
+                    <button onClick={saveNote} style={buttonStyle("#007bff")}>
+                        💾 Save Note
                     </button>
                     <button
                         onClick={handleExport}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            padding: "8px 12px",
-                            backgroundColor: "#28a745",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                        }}
+                        style={buttonStyle("#28a745")}
                     >
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                        >
-                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                        </svg>
-                        Export MD
+                        ⬇️ Export MD
                     </button>
                 </div>
             </div>
+
             <div
                 ref={editorRef}
                 className="editor"
@@ -304,11 +252,22 @@ const Editor = ({ note, onSave }) => {
                     borderRadius: "8px",
                     padding: "10px",
                     backgroundColor: "white",
-                    borderRight: "1px solid #e9ecef",
-                    borderBottom: "1px solid #e9ecef",
                 }}
             />
         </div>
     );
 };
+
+const buttonStyle = (bgColor) => ({
+    display: "flex",
+    alignItems: "center",
+    padding: "8px 12px",
+    backgroundColor: bgColor,
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+});
+
 export default Editor;
