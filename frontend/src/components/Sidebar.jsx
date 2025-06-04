@@ -2,7 +2,7 @@ import React from "react";
 import NoteList from "./NoteList";
 import CreateNoteButton from "./CreateNoteButton";
 
-const Sidebar = ({ notes, onNoteSelect, onCreateNote, onDownloadNote }) => {
+const Sidebar = ({ notes, onNoteSelect, onCreateNote, onDeleteNote }) => {
     return (
         <div className="sidebar">
             <div className="sidebar-header">
@@ -12,7 +12,7 @@ const Sidebar = ({ notes, onNoteSelect, onCreateNote, onDownloadNote }) => {
             <NoteList
                 notes={notes}
                 onNoteSelect={onNoteSelect}
-                onDownloadNote={onDownloadNote}
+                onDeleteNote={onDeleteNote}
             />
         </div>
     );

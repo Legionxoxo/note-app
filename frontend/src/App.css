@@ -4,6 +4,7 @@
     margin: 0;
     padding: 0;
     text-align: left;
+    overflow: hidden;
 }
 
 .logo {
@@ -49,6 +50,7 @@
     background-color: #f5f5f5;
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -58,6 +60,8 @@
     padding: 20px;
     overflow-y: auto;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar-header {
@@ -65,6 +69,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
 .sidebar-header h2 {
@@ -98,7 +103,8 @@
     background-color: #f8f8f8;
     cursor: pointer;
     transition: background-color 0.2s;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    border: 1px solid #e0e0e0;
 }
 
 .note-item:hover {
@@ -109,14 +115,40 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .note-header h3 {
     margin: 0;
-    font-size: 16px;
+    font-size: 15px;
     color: #000000;
     flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.delete-button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.delete-button:hover {
+    background-color: #ffebee;
+    color: #dc3545;
+}
+
+.delete-button svg {
+    width: 20px;
+    height: 20px;
 }
 
 .download-button {
@@ -164,18 +196,19 @@
 }
 
 .note-date {
-    margin: 8px 0 0 0;
+    margin: 0;
     font-size: 12px;
     color: #666;
+    font-style: italic;
 }
 
 .main-content {
     flex: 1;
     padding: 20px;
-    overflow-y: auto;
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .editor-container {
@@ -186,12 +219,14 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .editor {
     flex: 1;
     min-height: 0;
     color: #000000;
+    overflow-y: auto;
 }
 
 .editor-header {

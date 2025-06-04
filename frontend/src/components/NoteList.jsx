@@ -1,6 +1,6 @@
 import React from "react";
 
-const NoteList = ({ notes, onNoteSelect, onDownloadNote }) => {
+const NoteList = ({ notes, onNoteSelect, onDeleteNote }) => {
     return (
         <div className="note-list">
             {notes.map((note) => (
@@ -11,44 +11,30 @@ const NoteList = ({ notes, onNoteSelect, onDownloadNote }) => {
                     >
                         <h3>{note.title || "Untitled Note"}</h3>
                         <button
-                            className="download-button"
+                            className="delete-button"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onDownloadNote(note);
+                                if (
+                                    window.confirm(
+                                        "Are you sure you want to delete this note?"
+                                    )
+                                ) {
+                                    onDeleteNote(note.id);
+                                }
                             }}
-                            title="Download as Markdown"
+                            title="Delete Note"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
                                 fill="currentColor"
                             >
-                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                             </svg>
                         </button>
                     </div>
-                    <div
-                        className="note-preview"
-                        onClick={() => onNoteSelect(note)}
-                    >
-                        {note.markdown ? (
-                            <div className="markdown-preview">
-                                {note.markdown
-                                    .split("\n")
-                                    .slice(0, 3)
-                                    .map((line, index) => (
-                                        <p key={index} className="preview-line">
-                                            {line.length > 50
-                                                ? line.substring(0, 50) + "..."
-                                                : line}
-                                        </p>
-                                    ))}
-                            </div>
-                        ) : (
-                            <p className="preview-line">No content</p>
-                        )}
-                    </div>
                     <p className="note-date">
+                        Created:{" "}
                         {new Date(note.lastModified).toLocaleDateString()}
                     </p>
                 </div>

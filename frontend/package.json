@@ -11,11 +11,15 @@
   },
   "dependencies": {
     "@editorjs/checklist": "^1.6.0",
+    "@editorjs/code": "^2.9.3",
+    "@editorjs/delimiter": "^1.4.2",
     "@editorjs/editorjs": "^2.30.8",
     "@editorjs/header": "^2.8.8",
     "@editorjs/list": "^2.0.8",
     "@editorjs/marker": "^1.4.0",
     "@editorjs/paragraph": "^2.11.7",
+    "@editorjs/simple-image": "^1.6.0",
+    "@editorjs/table": "^2.4.5",
     "editorjs-md-parser": "^0.0.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
