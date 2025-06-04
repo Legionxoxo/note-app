@@ -1,0 +1,310 @@
+#root {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+}
+
+.logo {
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: filter 300ms;
+}
+.logo:hover {
+    filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+    filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    a:nth-of-type(2) .logo {
+        animation: logo-spin infinite 20s linear;
+    }
+}
+
+.card {
+    padding: 2em;
+}
+
+.read-the-docs {
+    color: #888;
+}
+
+.app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar {
+    width: 300px;
+    background-color: #ffffff;
+    border-right: 1px solid #e0e0e0;
+    padding: 20px;
+    overflow-y: auto;
+    height: 100vh;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    color: #000000;
+}
+
+.create-note-btn {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.create-note-btn:hover {
+    background-color: #45a049;
+}
+
+.note-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.note-item {
+    padding: 12px;
+    border-radius: 4px;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 10px;
+}
+
+.note-item:hover {
+    background-color: #e8e8e8;
+}
+
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.note-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #000000;
+    flex: 1;
+}
+
+.download-button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.download-button:hover {
+    background-color: #e0e0e0;
+    color: #000;
+}
+
+.download-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.note-preview {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #666;
+    max-height: 60px;
+    overflow: hidden;
+}
+
+.markdown-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.preview-line {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.note-date {
+    margin: 8px 0 0 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor {
+    flex: 1;
+    min-height: 0;
+    color: #000000;
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.editor-title {
+    font-size: 24px;
+    color: #000000;
+    margin: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    max-width: 500px;
+}
+
+.editor-title::placeholder {
+    color: #666666;
+}
+
+.save-button {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 140px;
+}
+
+.save-button:hover {
+    background-color: #1976d2;
+}
+
+.save-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: #000000;
+}
+
+.welcome-screen h1 {
+    margin-bottom: 10px;
+    color: #000000;
+}
+
+/* Editor.js specific styles */
+.ce-block__content {
+    color: #000000 !important;
+}
+
+.ce-toolbar__content {
+    color: #000000 !important;
+}
+
+.ce-header {
+    color: #000000 !important;
+}
+
+.ce-paragraph {
+    color: #000000 !important;
+}
+
+.ce-list {
+    color: #000000 !important;
+}
+
+.ce-checklist__item {
+    color: #000000 !important;
+}
+
+.ce-toolbar__plus,
+.ce-toolbar__settings-btn {
+    color: #000000 !important;
+}
+
+.export-button {
+    background-color: black;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    width: 140px;
+}
+
+.export-button:hover {
+    background-color: brown;
+}
+.export-button svg {
+    width: 16px;
+    height: 16px;
+}
