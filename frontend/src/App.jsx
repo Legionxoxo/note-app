@@ -106,7 +106,10 @@ const App = () => {
     };
 
     return (
-        <div className="app">
+        <div
+            className="app"
+            style={{ display: "flex", height: "100vh", overflow: "hidden" }}
+        >
             <Sidebar
                 notes={notes}
                 onNoteSelect={handleNoteSelect}
@@ -114,7 +117,13 @@ const App = () => {
                 onDeleteNote={handleDeleteNote}
                 onDownloadNote={handleDownloadNote}
             />
-            <main className="main-content">
+            <main
+                className="main-content"
+                style={{
+                    flex: 1,
+                    overflow: "hidden",
+                }}
+            >
                 {selectedNote ? (
                     <Editor
                         key={selectedNote.id}

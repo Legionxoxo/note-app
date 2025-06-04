@@ -170,9 +170,12 @@ const Editor = ({ note, onSave }) => {
             className="editor-container"
             style={{
                 fontFamily: "system-ui, -apple-system, sans-serif",
-                maxWidth: "800px",
-                margin: "0 auto",
+                width: "96%",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
                 padding: "20px",
+                marginBottom: "40px",
             }}
         >
             <div
@@ -294,13 +297,15 @@ const Editor = ({ note, onSave }) => {
                 ref={editorRef}
                 className="editor"
                 style={{
-                    minHeight: "400px",
-                    maxHeight: "calc(100vh - 200px)",
+                    flex: 1,
+                    minHeight: 0,
                     overflowY: "auto",
                     border: "1px solid #e9ecef",
                     borderRadius: "8px",
-                    padding: "20px",
+                    padding: "10px",
                     backgroundColor: "white",
+                    borderRight: "1px solid #e9ecef",
+                    borderBottom: "1px solid #e9ecef",
                 }}
             />
         </div>
