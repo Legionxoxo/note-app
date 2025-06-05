@@ -20,9 +20,11 @@
     "@editorjs/paragraph": "^2.11.7",
     "@editorjs/simple-image": "^1.6.0",
     "@editorjs/table": "^2.4.5",
+    "@tailwindcss/vite": "^4.1.8",
     "editorjs-md-parser": "^0.0.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

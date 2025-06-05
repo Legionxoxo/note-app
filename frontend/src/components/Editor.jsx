@@ -4,7 +4,7 @@ import { EDITOR_JS_TOOLS } from "./editor/editorTools";
 import { handleFileUpload } from "../utils/fileUtils";
 import { exportAsMarkdown, downloadMarkdown } from "../utils/exportUtils";
 
-const Editor = ({ note = {}, onSave }) => {
+const Editor = ({ note = {}, onSave, onClose, onUpdateNote, onUpdateTags }) => {
     const editorRef = useRef(null);
     const editorInstance = useRef(null);
     const fileInputRef = useRef(null);
@@ -13,15 +13,55 @@ const Editor = ({ note = {}, onSave }) => {
     const debounceTimeoutRef = useRef(null);
 
     const [title, setTitle] = useState(note.title || "Untitled Note");
+    const [tags, setTags] = useState(note.tags || ["#untitled"]);
+    const [tagInput, setTagInput] = useState("");
     const titleRef = useRef(title);
 
     useEffect(() => {
         setTitle(note.title || "Untitled Note");
-    }, [note.title]);
+        setTags(note.tags || ["#untitled"]);
+    }, [note.title, note.tags]);
 
     useEffect(() => {
         titleRef.current = title;
     }, [title]);
+
+    const handleTitleChange = (e) => {
+        const newTitle = e.target.value;
+        setTitle(newTitle);
+        onUpdateNote(note.id, newTitle);
+    };
+
+    const handleTagInputChange = (e) => {
+        setTagInput(e.target.value);
+    };
+
+    const handleTagInputKeyDown = (e) => {
+        if (e.key === "Enter" && tagInput.trim()) {
+            e.preventDefault();
+            const newTag = tagInput.trim();
+            if (!newTag.startsWith("#")) {
+                setTagInput("#" + newTag);
+                return;
+            }
+            if (!tags.includes(newTag)) {
+                const newTags = [...tags, newTag];
+                setTags(newTags);
+                onUpdateTags(note.id, newTags);
+            }
+            setTagInput("");
+        } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+            const newTags = tags.slice(0, -1);
+            setTags(newTags);
+            onUpdateTags(note.id, newTags);
+        }
+    };
+
+    const removeTag = (tagToRemove) => {
+        const newTags = tags.filter((tag) => tag !== tagToRemove);
+        setTags(newTags);
+        onUpdateTags(note.id, newTags);
+    };
 
     const forceDestroyEditor = () => {
         if (editorInstance.current) {
@@ -175,99 +215,81 @@ const Editor = ({ note = {}, onSave }) => {
     };
 
     return (
-        <div
-            className="editor-container"
-            style={{
-                fontFamily: "system-ui",
-                width: "96%",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                padding: "20px",
-                marginBottom: "40px",
-            }}
-        >
-            <div
-                className="editor-header"
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    marginBottom: "20px",
-                    padding: "16px",
-                    backgroundColor: "#f8f9fa",
-                    borderRadius: "8px",
-                    border: "1px solid #e9ecef",
-                }}
-            >
+        <div className="w-[96%] h-full flex flex-col p-5 mb-10 font-sans">
+            <div className="flex flex-col gap-3 mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <input
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    onBlur={saveNote}
+                    onChange={handleTitleChange}
                     placeholder="Note Title"
-                    style={{
-                        flex: 1,
-                        padding: "8px 12px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "16px",
-                        fontWeight: "500",
-                    }}
+                    className="px-3 py-2 border border-gray-300 rounded text-base font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div className="flex flex-wrap gap-2 items-center">
+                    {tags.map((tag, index) => (
+                        <span
+                            key={index}
+                            className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                        >
+                            {tag}
+                            <button
+                                onClick={() => removeTag(tag)}
+                                className="text-blue-600 hover:text-blue-800"
+                            >
+                                ×
+                            </button>
+                        </span>
+                    ))}
+                    <input
+                        type="text"
+                        value={tagInput}
+                        onChange={handleTagInputChange}
+                        onKeyDown={handleTagInputKeyDown}
+                        placeholder="Add tag (press Enter)"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+                <div className="flex gap-2">
                     <input
                         type="file"
                         ref={fileInputRef}
                         onChange={handleFileSelect}
                         accept=".md"
-                        style={{ display: "none" }}
+                        className="hidden"
                     />
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        style={buttonStyle("#6c757d")}
+                        className="flex items-center px-3 py-2 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition-colors"
                     >
                         📂 Upload MD
                     </button>
-                    <button onClick={saveNote} style={buttonStyle("#007bff")}>
+                    <button
+                        onClick={saveNote}
+                        className="flex items-center px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+                    >
                         💾 Save Note
                     </button>
                     <button
                         onClick={handleExport}
-                        style={buttonStyle("#28a745")}
+                        className="flex items-center px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
                     >
                         ⬇️ Export MD
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="flex items-center px-3 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
+                        title="Close Editor"
+                    >
+                        ✕ Close
                     </button>
                 </div>
             </div>
 
             <div
                 ref={editorRef}
-                className="editor"
-                style={{
-                    flex: 1,
-                    minHeight: 0,
-                    overflowY: "auto",
-                    border: "1px solid #e9ecef",
-                    borderRadius: "8px",
-                    padding: "10px",
-                    backgroundColor: "white",
-                }}
+                className="flex-1 min-h-0 overflow-y-auto border border-gray-200 rounded-lg p-2.5 bg-white"
             />
         </div>
     );
 };
-
-const buttonStyle = (bgColor) => ({
-    display: "flex",
-    alignItems: "center",
-    padding: "8px 12px",
-    backgroundColor: bgColor,
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "14px",
-});
 
 export default Editor;
