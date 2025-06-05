@@ -342,3 +342,16 @@
     width: 16px;
     height: 16px;
 }
+
+/* Move the entire block content (text + buttons) left */
+/* Shift the text block */
+.ce-block {
+    position: relative; /* Important for positioning child elements */
+    margin-left: -580px;
+}
+
+/* Adjust toolbar button positions */
+.ce-toolbar__plus,
+.ce-toolbar__settings-btn {
+    transform: translateX(-300px); /* Move them to align with text */
+}
